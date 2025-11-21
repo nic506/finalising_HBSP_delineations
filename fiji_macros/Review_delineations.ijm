@@ -13,21 +13,33 @@ dialgoue_wait_for_user = false;
 // --- Main ---
 macro "Review Montages" {
 	setBatchMode(false);
-	//base_dir = getDirectory("Choose base directory");
-	base_dir = getString("Enter base directory:", "");
 	
-	//print("\\Clear");
-	//print("move me");
-	//waitForUser(
-	    //"Prepare your screen for reviewing",
-	    //"(1) Hide all application windows except Fiji.\n"
-	    //+ "(2) Hide the Macro Script Runner window.\n"
-	    //+ "(3) Move the Log window to the bottom-left corner of the screen."
-	//);
-
 	print("\\Clear");
-    processDirectory(base_dir);
-    print("--- Reviewing Of " + base_dir + " Complete ---");
+	print("move me");
+	waitForUser("",
+	    "\nPrepare Your Screen For Reviewing:"
+	    + "\n "
+	    + "\n(1) Move the Log window to the bottom-left corner of the screen."
+	    + "\n(2) Hide all other application windows except Fiji."
+	    + "\n "
+	);
+	
+	while (true) {
+		//base_dir = getDirectory("Choose base directory");
+		base_dir = getString("Enter base directory:", "");
+		if (!endsWith(base_dir, "\\")) {base_dir = base_dir + "\\";}
+		
+		print("\\Clear");
+	    processDirectory(base_dir);
+	    split_path = split(base_dir, "\\");
+	    print("--- Reviewing Complete: " + base_dir + " ---");
+	    
+	    logContent = getInfo("log");
+	    getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
+	    timeStamp = "" + year + "-" + month + "-" + dayOfMonth + "-" + hour + "-" + minute + "-" + second + "-" + msec;
+	    logFilePath = base_dir + "runLog_" + timeStamp + ".txt";
+	    File.saveString(logContent, logFilePath);
+	}
 }
 
 // --- Process Directory Func ---
