@@ -14,6 +14,7 @@ dialgoue_wait_for_user = false;
 macro "Review Montages" {
 	setBatchMode(false);
 	
+	close("*");
 	print("\\Clear");
 	print("move me");
 	waitForUser("",
@@ -25,19 +26,21 @@ macro "Review Montages" {
 	);
 	
 	while (true) {
-		//base_dir = getDirectory("Choose base directory");
-		base_dir = getString("Enter base directory:", "");
-		if (!endsWith(base_dir, "\\")) {base_dir = base_dir + "\\";}
+		//baseDir = getDirectory("Choose base directory");
+		baseDir = getString("Enter base directory:", "");
+		if (!endsWith(baseDir, "\\")) {baseDir = baseDir + "\\";}
 		
+		close("*");
 		print("\\Clear");
-	    processDirectory(base_dir);
-	    split_path = split(base_dir, "\\");
-	    print("--- Reviewing Complete: " + base_dir + " ---");
+		print("--- Base Directory: " + File.getName(baseDir) + " ---");
+	    processDirectory(baseDir);
+	    split_path = split(baseDir, "\\");
+	    print("\n🎉 Reviewing Complete: " + baseDir);
 	    
 	    logContent = getInfo("log");
 	    getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
 	    timeStamp = "" + year + "-" + month + "-" + dayOfMonth + "-" + hour + "-" + minute + "-" + second + "-" + msec;
-	    logFilePath = base_dir + "runLog_" + timeStamp + ".txt";
+	    logFilePath = baseDir + "Review_Log(" + timeStamp + ").txt";
 	    File.saveString(logContent, logFilePath);
 	}
 }
@@ -50,7 +53,7 @@ function processDirectory(dir) {
 	for (i = 0; i < folders.length; i++) {
 	    if (File.isDirectory(dir + folders[i])) {
 	        folderPath = dir + folders[i];
-	        print("Processing folder: " + folderPath);
+	        print("\nProcessing folder: " + folderPath);
 	        
 	        // Skip if already reviewed 
             filesInFolder = getFileList(folderPath);
@@ -83,7 +86,7 @@ function processDirectory(dir) {
                 	filesInSubfolder = getFileList(subfolderPath);
                 	for (w = 0; w < filesInSubfolder.length; w++) {
                 		fileNameSub = filesInSubfolder[w];
-                		if (endsWith(fileNameSub, ".png") && indexOf(fileNameSub, distinguisher1) >= 0 && startsWith(fileNameSub, "RoiOverlay_") && indexOf(fileNameSub, "Montage") >= 0) {
+                		if (endsWith(fileNameSub, ".png") && indexOf(fileNameSub, distinguisher1) >= 0 && startsWith(fileNameSub, "RoiOverlay_Composite")) {
 							path1 = Array.concat(path1, subfolderPath + fileNameSub);
                     		baseName = replace(fileNameSub, ".png", "");
                     		baseName = replace(baseName, distinguisher1, "");
@@ -97,7 +100,7 @@ function processDirectory(dir) {
                 	filesInSubfolder = getFileList(subfolderPath);
                 	for (w = 0; w < filesInSubfolder.length; w++) {
                 		fileNameSub = filesInSubfolder[w];
-						if (endsWith(fileNameSub, ".png") && indexOf(fileNameSub, distinguisher2) >= 0 && startsWith(fileNameSub, "RoiOverlay_") && indexOf(fileNameSub, "Montage") >= 0) {
+						if (endsWith(fileNameSub, ".png") && indexOf(fileNameSub, distinguisher2) >= 0 && startsWith(fileNameSub, "RoiOverlay_Composite")) {
                     		path2 = Array.concat(path2, subfolderPath + fileNameSub);
                 		}
                 	}

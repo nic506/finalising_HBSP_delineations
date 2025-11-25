@@ -1,82 +1,154 @@
-// ====== USER SETTINGS ======
-baseDir = getDirectory("Choose base directory");
+
+
+// --- Configuration ---
 registration_version_folder_names = newArray("old_regist", "new_regist");
 zip_searchString = "RoiSet";
-png_searchString = "DONT WANT U";
-tif_searchString = "PSD95_CY5"; 
+png_searchString = "HELL NO";
+overlayTIFFs = true;
 saving_prefix = "RoiOverlay_";                    
-strokeColor = "red";
-flattened_im_downsample = 0.25;
+strokeColor = "cyan";
+flattened_im_downsample = 0.2;
 lineWidth = 5;
-adjust_BCs = newArray(90, 350); // for PSD95 CY5 in PSD95/PSD93/GluN1 triplex
 setBatchMode(true); 
-// ============================
+var channelCombination, tif_searchStrings, min_BC, max_BC;
 
-folders = getFileList(baseDir);
-
-for (i = 0; i < folders.length; i++) {
-    if (File.isDirectory(baseDir + folders[i])) {
-        folderPath_1 = baseDir + folders[i];
-        files_1 = getFileList(folderPath_1);
-        print("Processing folder: " + folderPath_1);
-        
-        // --- Loop over registration versions ---
-		for (k = 0; k < registration_version_folder_names.length; k++) {
-			registration_version = registration_version_folder_names[k];
-
-	        // --- Get tif (montage) file paths ---
-	        tifFilePath = "";
-	        for (j = 0; j < files_1.length; j++) {
-	            if (endsWith(files_1[j], ".tif") && indexOf(files_1[j], tif_searchString) >= 0)
-	                tifFilePath = folderPath_1 + files_1[j];
-	        }
-	        
-	        // --- Get png (Nissl) and zip (RoiSet) file paths ---
-	        pngFilePath = "";
-	        zipFilePath = "";
-	        folderPath_2 = folderPath_1 + registration_version + File.separator;
-	        files_2 = getFileList(folderPath_2);
-	        for (j = 0; j < files_2.length; j++) {
-	            if (endsWith(files_2[j], ".png") && indexOf(files_2[j], png_searchString) >= 0) 
-	            	pngFilePath = folderPath_2 + files_2[j];
-	            if (endsWith(files_2[j], ".zip") && indexOf(files_2[j], zip_searchString) >= 0) 
-	            	zipFilePath = folderPath_2 + files_2[j];
-	        }
-	        
-	        if (zipFilePath == "") {
-	            print("❌ Missing ROI zip file in " + folderPath_2);
-	            continue;
-	        }
-	
-	        // --- Load ROIs and set properties ---
-	        roiManager("reset");
-	        roiManager("Open", zipFilePath);
-	        roiManager("Select All");
-	        roiManager("Set Color", strokeColor);
-	        roiManager("Set Line Width", lineWidth);
-	
-	        // --- Process both PNG and TIF images ---
-	        if (tifFilePath == "") {print("No TIFF file in " + folderPath_1 + " to overlay");}
-	        else {processImage(tifFilePath, zipFilePath, saving_prefix);}
-	        if (pngFilePath == "") {print("No PNG file in " + folderPath_2 + " to overlay");}
-	        else {processImage(pngFilePath, zipFilePath, saving_prefix);}
-	        
-	        roiManager("reset");
-    	}
-    }
+function findChannelCombination(name) {
+	if (name == "PSD95_PSD93_GluN1") { 
+		channelCombination = "PSD95-PSD93";
+	    tif_searchStrings = newArray("_af546", "_cy5");
+		min_BC = newArray(91, 93); 
+	    max_BC = newArray(236, 426);
+	} // PSD95_PSD93_GLUN1
+	if (name == "fuck you") { 
+		channelCombination = "fuck you";
+	    tif_searchStrings = newArray("_af546", "_cy5");
+		min_BC = newArray(90, 0); 
+	    max_BC = newArray(200, 1);
+	}
 }
 
-// --- Function to process image ---
-function processImage(imgPath, RoiSetPath, prefix) {
-    open(imgPath);
-    if (endsWith(imgPath, ".tif")) {
-		setMinAndMax(adjust_BCs[0], adjust_BCs[1]);
-		wait(1000);
-		baseName = File.getNameWithoutExtension(imgPath);
+
+
+// --- Main ---
+macro "Review Montages" {
+	pooledBrainDir = getString("Enter pooled brain directory:", "");
+	if (!endsWith(pooledBrainDir, "\\")) {pooledBrainDir = pooledBrainDir + "\\";}
+	pooledBrainDirFiles = getFileList(pooledBrainDir);
+	for (i = 0; i < pooledBrainDirFiles.length; i++) {
+		baseDir = pooledBrainDir + pooledBrainDirFiles[i];
+	    if (File.isDirectory(baseDir)) {
+			close("*");
+			print("\\Clear");
+	    	
+	    	baseDirFiles = getFileList(baseDir);
+    		if (baseDirFiles.length == 0) {
+    			print("❌ Base directory is empty " + baseDir);
+    			continue;
+    		}
+	    	
+	    	if (overlayTIFFs) {findChannelCombination(replace(pooledBrainDirFiles[i], "/", ""));}
+			else { // Dummy values to prevent overlaying ROIs on TIFFs
+			    tif_searchStrings = newArray("HELL NO");
+			    min_BC = newArray(0);
+			    max_BC = newArray(0);
+			}
+			
+			print("--- Base Directory: " + File.getName(baseDir) + " ---");
+	    	processDirectory(baseDir);
+	    	print("\n🎉 Overlaying and Saving Complete: " + baseDir);
+	    	
+		    logContent = getInfo("log");
+		    logFilePath = baseDir + "Overlay_Log(most-recent).txt";
+		    File.saveString(logContent, logFilePath);
+	    }
+	}
+}
+
+// --- Process Directory Func ---
+function processDirectory(dir) { 
+	folders = getFileList(dir);
+	for (i = 0; i < folders.length; i++) {
+	    if (File.isDirectory(dir + folders[i])) {
+	        folderPath_1 = dir + folders[i];
+	        files_1 = getFileList(folderPath_1);
+	        print("\nProcessing folder: " + folderPath_1);
+	        
+	        // --- Get tif (montage) file paths ---
+	        tifFilePathList = newArray(tif_searchStrings.length);
+	        for (k = 0; k < tif_searchStrings.length; k++) {
+	        	current_tif_searchString = tif_searchStrings[k];
+		        for (j = 0; j < files_1.length; j++) {
+		            if (endsWith(files_1[j], ".tif") && indexOf(toLowerCase(files_1[j]), current_tif_searchString) >= 0)
+		                tifFilePathList[k] = folderPath_1 + files_1[j];
+		        }
+	        }
+	        
+	        // --- Loop over registration versions ---
+			for (k = 0; k < registration_version_folder_names.length; k++) {
+				registration_version = registration_version_folder_names[k];
+		        
+		        // --- Get png (Nissl) and zip (RoiSet) file paths ---
+		        pngFilePath = newArray(0);
+		        zipFilePath = "";
+		        folderPath_2 = folderPath_1 + registration_version + File.separator;
+		        files_2 = getFileList(folderPath_2);
+		        for (j = 0; j < files_2.length; j++) {
+		            if (endsWith(files_2[j], ".png") && indexOf(files_2[j], png_searchString) >= 0) 
+		            	pngFilePath = Array.concat(pngFilePath, folderPath_2 + files_2[j]);
+		            if (endsWith(files_2[j], ".zip") && indexOf(files_2[j], zip_searchString) >= 0) 
+		            	zipFilePath = folderPath_2 + files_2[j];
+		        }
+		        
+		        if (zipFilePath == "") {
+		            print("❌ Missing ROI zip file in " + folderPath_2);
+		            continue;
+		        }
+		
+		        // --- Load ROIs and set properties ---
+		        roiManager("reset");
+		        roiManager("Open", zipFilePath);
+		        if (roiManager("count") > 0) {
+	                roiManager("Select All");
+	                roiManager("Set Color", strokeColor);
+	                roiManager("Set Line Width", lineWidth);
+	            }
+	            else {print("❌ No ROIs in zip " + zipFilePath);}
+		
+		        // --- Process both PNG and TIF images ---
+		        if (tif_searchStrings[0] == "HELL NO") {print("✱ Not wanting to overlay TIFF file in " + folderPath_1);}
+		        else if (tifFilePathList.length != tif_searchStrings.length) {print("❌ Incorrect number of TIFF files in " + folderPath_1);}
+		        else {processImage(tifFilePathList, zipFilePath, saving_prefix);}
+		        
+		        if (png_searchString == "HELL NO") {print("✱ Not wanting to overlay PNG file in " + folderPath_2);}
+		        else if (pngFilePath.length == 0) {print("❌ Missing PNG file in " + folderPath_2);}
+		        else {processImage(pngFilePath, zipFilePath, saving_prefix);}
+		        
+		        roiManager("reset");
+	    	}
+	    }
+	}
+}
+
+// --- Process Image Func (dynamically creates composite for number of channels) ---
+function processImage(imgPathList, RoiSetPath, prefix) {
+	mergeCommand = "";
+	for (k = 0; k < imgPathList.length; k++) {
+		open(imgPathList[k]);
+		if (endsWith(imgPathList[k], ".tif")) {
+			setMinAndMax(min_BC[k], max_BC[k]);
+			wait(1000);
+			mergeCommand += " c" + (k + 1) + "=[" + getTitle() + "]";
+		}
+	}
+	if (endsWith(imgPathList[0], ".png")) {name = File.getName(imgPathList[0]);} 
+	else {
+		mergeCommand += " create ignore";
+    	run("Merge Channels...", mergeCommand);
+    	close("\\Others");
 		parentFolder = File.getName(File.getParent(RoiSetPath));
-		name = baseName + "_" + parentFolder;
-    }
-    else {name = File.getName(imgPath);}
+		grandParentFolder = File.getName(File.getParent(File.getParent(RoiSetPath)));
+		name = "Composite_" + channelCombination + grandParentFolder + parentFolder;
+	}
     roiManager("Show All");
     wait(500);
     run("Flatten");
@@ -85,9 +157,6 @@ function processImage(imgPath, RoiSetPath, prefix) {
     savePath = File.getParent(RoiSetPath) + File.separator + prefix + name;
     saveAs("PNG", savePath);
     close("*");
-    print("✅ Saved: " + savePath);
+    print("✅ Overlay saved to: " + savePath);
 }
-
-print("🎉 Done processing all folders!");
-
 
