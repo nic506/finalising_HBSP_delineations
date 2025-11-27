@@ -273,15 +273,15 @@ function set_TabsSizeAndPosition() {
 	newHeight = newWidth * height_to_width;
 	
 	// If resulting height exceeds 65% of screen height, set height to that threshold and scale width proportionally
-	if (newHeight > screenHeight * 0.7) {
-	    scaleFactor = (screenHeight * 0.7) / newHeight;
+	if (newHeight > screenHeight * 0.68) {
+	    scaleFactor = (screenHeight * 0.68) / newHeight;
 	    newWidth = newWidth * scaleFactor;
 	    newHeight = newHeight * scaleFactor;
 	}
 	
 	// IMAGE POSITIONING LOGIC //
 	// Common y position
-	PositionY = screenHeight * 0.02;
+	PositionY = screenHeight * 0.005;
 	
 	// Calculate the total empty gap space on the screen's width
 	totalWidthGapSpace = screenWidth - (newWidth * 2);
@@ -305,7 +305,7 @@ function set_TabsSizeAndPosition() {
 	
 	// DIALOGUE POSITIONING LOGIC //
 	// Calculate dialogue y position
-	DIALOGUE_PositionY = PositionY + newHeight + (screenHeight * 0.015);
+	DIALOGUE_PositionY = PositionY + newHeight + (screenHeight * 0.00001);
 	
 	// Set dialogue position
 	Dialog.setLocation((screenWidth / 2), DIALOGUE_PositionY);

@@ -15,17 +15,41 @@ var channelCombination, tif_searchStrings, min_BC, max_BC;
 function findChannelCombination(name) {
 	if (name == "PSD95_PSD93_GLUN1") { 
 		channelCombination = "PSD95-PSD93";
-	    tif_searchStrings = newArray("_af546", "_cy5");
-		min_BC = newArray(88, 79); 
-	    max_BC = newArray(363, 343);
+	    tif_searchStrings = newArray("_cy5", "_af546");
+		min_BC = newArray(, ); 
+	    max_BC = newArray(, );
 	}
-	else {print();}
+	else if (name == "PSD95_GLUA2_GLUN1") { 
+		channelCombination = "PSD95-GLUA2";
+	    tif_searchStrings = newArray("_cy5", "_af555");
+		min_BC = newArray(, ); 
+	    max_BC = newArray(, );
+	}
+	else if (name == "GEPH") { 
+		channelCombination = "GEPH";
+	    tif_searchStrings = newArray("_cy5");
+		min_BC = newArray(, ); 
+	    max_BC = newArray(, );
+	}
+	else if (name == "GLUN1_GLUA2") { 
+		channelCombination = "GLUN1-GLUA2";
+	    tif_searchStrings = newArray("_cy5", "_af546");
+		min_BC = newArray(, ); 
+	    max_BC = newArray(, );
+	}
+	else if (name == "VGLUT_VGAT") { 
+		channelCombination = "VGLUT-VGAT";
+	    tif_searchStrings = newArray("_568", "_cy5");
+		min_BC = newArray(, ); 
+	    max_BC = newArray(, );
+	}
+	else {print("❌ Unidentified channel combination " + name);}
 }
 
 
 
 // --- Main ---
-macro "Review Montages" {
+macro "Overlay ROIs" {
 	pooledBrainDir = getString("Enter pooled brain directory:", "");
 	if (!endsWith(pooledBrainDir, "\\")) {pooledBrainDir = pooledBrainDir + "\\";}
 	pooledBrainDirFiles = getFileList(pooledBrainDir);
