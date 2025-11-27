@@ -4,15 +4,27 @@ import shutil
 import subprocess
 
 
-def get_filepaths(Chanc2_HBSP_root_dir, which_brain):
+def get_filepaths(HBSP_root_dirs, which_brain, which_nas):
 
-    root_dir = os.path.join(Chanc2_HBSP_root_dir, "HBSP_Brains_1-6", "HBSP_Brain" + str(which_brain))
+    brain_folder_name = "HBSP_Brain" + str(which_brain)
 
-    channels_dirs = ({
-        "PSD95_PSD93_GluN1": os.path.join(root_dir, "PSD95_PSD93_GluN1"),
-        #"PSD95_GLUA2_GLUN1": os.path.join(root_dir, "PSD95_GLUA2_GLUN1"),
-        #"GEPH": os.path.join(root_dir, "GEPH_CY5"),
-    })
+    if which_nas == 2:
+        root_dir = os.path.join(HBSP_root_dirs, "HBSP_Brains_1-6", brain_folder_name)
+        channels_dirs = ({
+            "PSD95_PSD93_GLUN1": os.path.join(root_dir, "PSD95_PSD93_GluN1"),
+            "PSD95_GLUA2_GLUN1": os.path.join(root_dir, "PSD95_GLUA2_GLUN1"),
+            "GEPH": os.path.join(root_dir, "GEPH_CY5"),
+        })
+    elif which_nas == 3:
+        root_dir = os.path.join(HBSP_root_dirs, "HBSP_Brain1-6", brain_folder_name)
+        channels_dirs = ({
+            "GLUN1_GLUA2": os.path.join(root_dir, "GLUN1_GLUA2"),
+            "VGLUT_VGAT": os.path.join(root_dir, "VGLUT_VGAT_AF568"),
+        })
+    else:
+        print("Unidentified NAS drive")
+
+    print(f"\n\n----- PROCESSING NAS DRIVE {which_nas} -----\n")
 
     filepath_dict = {channel: {} for channel in channels_dirs}
 
@@ -63,7 +75,7 @@ def get_filepaths(Chanc2_HBSP_root_dir, which_brain):
                     dir_2_roiset_name_matches = [f for f in os.listdir(dir_1_filepath) if f == f"{dir_2_base_name}_regist_{registration_version}"]
                     if len(dir_2_roiset_name_matches) == 1:
                         dir_2_roiset_filepath = os.path.join(dir_1_filepath, dir_2_roiset_name_matches[0])
-                        rois_name_matches = [f for f in os.listdir(dir_2_roiset_filepath) if f == f"RoiSet{core_id}Nissl.zip"]
+                        rois_name_matches = [f for f in os.listdir(dir_2_roiset_filepath) if f"RoiSet{core_id}" in f and f.endswith(".zip")]
                         if len(rois_name_matches) == 1:
                             rois_filepath = os.path.join(dir_2_roiset_filepath, rois_name_matches[0])
                             if "rois_filepath" not in filepath_dict[channel][core_id]:
@@ -76,9 +88,16 @@ def get_filepaths(Chanc2_HBSP_root_dir, which_brain):
                         print(f"{len(dir_2_roiset_name_matches)} dir_2_roiset_name_matches found for {channel} in {dir_1_filepath}")
 
         # go into 'Montages' folder, get montages
-        montage_dir_filepath = os.path.join(channel_dir, "Montages")
-        if not os.path.exists(montage_dir_filepath):
-            print(f"'Montage' folder not found for {channel}")
+        montage_a = os.path.join(channel_dir, "Montages")
+        montage_b = os.path.join(channel_dir, "Montage_exports")
+        exists_a = os.path.exists(montage_a)
+        exists_b = os.path.exists(montage_b)
+        if exists_a and not exists_b:
+            montage_dir_filepath = montage_a
+        elif exists_b and not exists_a:
+            montage_dir_filepath = montage_b
+        else:
+            print(f"For {channel}, expected exactly one of 'Montages' or 'Montage_exports', but found {'both' if exists_a and exists_b else 'neither'}")
             continue
         num_channels = len(channel.split("_"))
         for core_id in core_id_list:
@@ -164,16 +183,18 @@ def robust_copy_for_vpn_nas_connection(src, dst):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--Chanc2_HBSP_root_dir", help="eg: Z:\\HBSP")
     parser.add_argument("--which_brain", type=int)
     parser.add_argument("--output_dir")
     parser.add_argument("--vpn_connection", action='store_true')
     args = parser.parse_args()
 
+    Chanc2 = r"Z:\HBSP"
+    Chanc3 = r"Y:\HBSP"
+    HBSP_root_dirs = [Chanc2, Chanc3]
 
-    filepath_dict = get_filepaths(args.Chanc2_HBSP_root_dir, args.which_brain)
-    montage_filepaths_dict = make_pooled_folders(args.output_dir, args.which_brain, filepath_dict, args.vpn_connection)
-
+    for i in range(len(HBSP_root_dirs)):
+        filepath_dict = get_filepaths(HBSP_root_dirs[i], args.which_brain, i + 2)
+        montage_filepaths_dict = make_pooled_folders(args.output_dir, args.which_brain, filepath_dict, args.vpn_connection)
 
     # print("\n\n\n\n\n\n\n")
     #
@@ -189,6 +210,5 @@ if __name__ == "__main__":
     #
     # print(filepath_dict["GEPH"])
     # print(len(filepath_dict["GEPH"]["SD03216_AD"]))
-
 
     print(f"\n  COMPLETED SUCCESSFULLY\n")
