@@ -172,7 +172,6 @@ function reviewImages(path1, path2, imageDir, baseName) {
 		    newArray("Needs to be rotated", "Tissue rip", "Blood vessel", "Edge artefact"),
 		    newArray(false, false, false, false)
 		);
-	  	Dialog.addMessage("\n");
 	    Dialog.addString("Other notes:", "", 30);
 	    
 	    // Use self-defined function to set the size and position of images and dialogue

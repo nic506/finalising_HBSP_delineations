@@ -13,18 +13,13 @@ setBatchMode(true);
 var channelCombination, tif_searchStrings, min_BC, max_BC;
 
 function findChannelCombination(name) {
-	if (name == "PSD95_PSD93_GluN1") { 
+	if (name == "PSD95_PSD93_GLUN1") { 
 		channelCombination = "PSD95-PSD93";
 	    tif_searchStrings = newArray("_af546", "_cy5");
-		min_BC = newArray(91, 93); 
-	    max_BC = newArray(236, 426);
-	} // PSD95_PSD93_GLUN1
-	if (name == "fuck you") { 
-		channelCombination = "fuck you";
-	    tif_searchStrings = newArray("_af546", "_cy5");
-		min_BC = newArray(90, 0); 
-	    max_BC = newArray(200, 1);
+		min_BC = newArray(88, 79); 
+	    max_BC = newArray(363, 343);
 	}
+	else {print();}
 }
 
 
