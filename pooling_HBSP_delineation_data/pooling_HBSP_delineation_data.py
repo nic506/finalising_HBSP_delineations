@@ -137,37 +137,37 @@ def make_pooled_folders(output_dir, which_brain, filepath_dict, vpn_connection):
                 if "rois_filepath" in file_type_info:
                     rois_src = file_type_info["rois_filepath"][registration_version]
                     rois_dst = os.path.join(registration_version_dir, "COPY_" + os.path.basename(rois_src))
-                    if os.path.exists(rois_dst):
-                        print(f"{channel} {os.path.normpath(rois_dst).split(os.sep)[-3:]} already exists, skipping.")
-                    else:
+                    if not os.path.exists(rois_dst):
                         if vpn_connection == False:
                             shutil.copy2(rois_src, rois_dst)
                         else:
                             robust_copy_for_vpn_nas_connection(rois_src, rois_dst)
+                    else:
+                        print(f"{channel} {os.path.normpath(rois_dst).split(os.sep)[-3:]} already exists, skipping.")
 
                 # copy registered nissl
                 if "regist_nissl_filepath" in file_type_info:
                     regist_nissl_src = file_type_info["regist_nissl_filepath"][registration_version]
                     regist_nissl_dst = os.path.join(registration_version_dir, "COPY_" + os.path.basename(regist_nissl_src))
-                    if os.path.exists(regist_nissl_dst):
-                        print(f"{channel} {os.path.normpath(regist_nissl_dst).split(os.sep)[-3:]} already exists, skipping.")
-                    else:
+                    if not os.path.exists(regist_nissl_dst):
                         if vpn_connection == False:
                             shutil.copy2(regist_nissl_src, regist_nissl_dst)
                         else:
                             robust_copy_for_vpn_nas_connection(regist_nissl_src, regist_nissl_dst)
+                    else:
+                        print(f"{channel} {os.path.normpath(regist_nissl_dst).split(os.sep)[-3:]} already exists, skipping.")
 
             # copy montages
             if "montage_filepaths" in file_type_info:
                 for montage_src in file_type_info["montage_filepaths"]:
                     montage_dst = os.path.join(core_id_dir, "COPY_" + os.path.basename(montage_src))
-                    if os.path.exists(montage_dst):
-                        print(f"{channel} {os.path.normpath(montage_dst).split(os.sep)[-2:]} already exists, skipping.")
-                    else:
+                    if not os.path.exists(montage_dst):
                         if vpn_connection == False:
                             shutil.copy2(montage_src, montage_dst)
                         else:
                             robust_copy_for_vpn_nas_connection(montage_src, montage_dst)
+                    else:
+                        print(f"{channel} {os.path.normpath(montage_dst).split(os.sep)[-2:]} already exists, skipping.")
 
 
 def robust_copy_for_vpn_nas_connection(src, dst):
