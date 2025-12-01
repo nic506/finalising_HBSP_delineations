@@ -6,7 +6,7 @@ channelCombination = "PSD95_PSD93_GLUN1";
 //channelCombination = "GEPH";
 //channelCombination = "GLUN1_GLUA2";
 //channelCombination = "VGLUT_VGAT";
-var selectedFilePaths, tif_searchStrings;
+var selectedDirPaths, tif_searchStrings;
 
 baseDir = "Z:\\HBSP\\pooled_delineation_data\\";
 pooledBrainDirNames = newArray("Brain1", "Brain2", "Brain3", "Brain4", "Brain5", "Brain6");
@@ -21,27 +21,17 @@ else {print("❌ Unidentified channel combination " + name);}
 
 
 
-
-
-
-
-/////// SAVING CSV IS INCORRECT FILEPATHS + NEED TO LOOP OVER TIF SEARCHSTRINGS IN IMAGE PROCESSING ///////
-
-
-
-
-
-
-
-// --- Randomly Sample File Paths ---
-selectedFilePaths = newArray(nToSample * pooledBrainDirNames.length);
+// --- Randomly Sample Directory Paths ---			
+close("*");
+print("\\Clear");
+selectedDirPaths = newArray(nToSample * pooledBrainDirNames.length);
 for (i = 0; i < pooledBrainDirNames.length; i++) {
 	currentBrain = pooledBrainDirNames[i];
-	currentBrainChannelPath = baseDir + currentBrain + channelCombination;
+	currentBrainChannelPath = baseDir + currentBrain + File.separator + channelCombination + File.separator;
 	fileList = getFileList(currentBrainChannelPath);
 	
 	// Keep only directories 
-	fileListDirs = newArray();
+	fileListDirs = newArray(0);
 	for (j = 0; j < fileList.length; j++) {
 		path = currentBrainChannelPath + fileList[j];
     	if (File.isDirectory(path)) {fileListDirs = Array.concat(fileListDirs, fileList[j]);}
@@ -49,12 +39,13 @@ for (i = 0; i < pooledBrainDirNames.length; i++) {
 	
 	// Check enough directories
 	if (fileListDirs.length < nToSample) {
-        print("❌ Brain " + currentBrain + " only has " + fileListDirs.length + " folders, cannot sample " + nToSample);
-		continue;
+		exit("MACRO STOPPED: Brain " + currentBrain + " only has " + fileListDirs.length + " folders, cannot sample " + nToSample);
+		//print("❌ Brain " + currentBrain + " only has " + fileListDirs.length + " folders, cannot sample " + nToSample);
+        //continue;
     }
 	
 	// Randomly sample directories
-	used = newArray();  
+	used = newArray(0);  
 	j = 0;
 	while (j < nToSample) {
 	    randomIdx = floor(random() * fileListDirs.length); 
@@ -69,47 +60,72 @@ for (i = 0; i < pooledBrainDirNames.length; i++) {
 	
 	    if (!idxIsUsed) {
 	        used = Array.concat(used, randomIdx);
-	        masterIndex = (nToSample * i) + count;
-	        selectedFilePaths[masterIndex] = currentBrainChannelPath + fileListDirs[randomIdx];
+	        masterIndex = (nToSample * i) + j;
+	        selectedDirPaths[masterIndex] = currentBrainChannelPath + fileListDirs[randomIdx];
 	        j++;
 	    }
 	}
 }
 
-// --- Process Images  ---
-// Output CSV file
-parts = split(baseDir, "\\");
-n = parts.length;
-last1 = parts[n-2];
-last2 = parts[n-1];
-outputFileName = tif_searchString + "_in_" + last1 + "_" + last2 + "_BC_values.csv";
-outputFile = baseDir + outputFileName;
-File.delete(outputFile);
-File.append("ID,min,max", outputFile);
-
-for (i = 0; i < selectedFilePaths.length; i++) {
-	selectedFileList = getFileList(selectedFilePaths[i]);
-	
-	tifFilePath = newArray(0);
-	for j = 0; j < selectedFileList.length; i++) {
-        if (indexOf(selectedFileList[j], tif_searchStrings) >= 0 && endsWith(selectedFileList[j], ".tif")) {
-            tifFilePath = Array.concat(tifFilePath, selectedFilePaths[i] + selectedFileList[j]);
-        }
-	}
-	if (tifFilePath.length != 1) {print("❌ Incorrect number of TIFF files in " + selectedFilePaths[i]);}
-	
-	open(tifFilePath);
-    id = getTitle();
-    
-	// Wait for user to auto set brightness and contrast settings 
-	waitForUser("", "Auto set BC settings");
-    
-	// Get min and max pixel values 
-	getMinAndMax(min, max);
-
-    // Append row to CSV
-    File.append(id + "," + min + "," + max, outputFile);
-
-    close();
+// --- Count number of filled positions (with directory path) in selectedDirPaths ---
+filledCount = 0;
+for (i = 0; i < selectedDirPaths.length; i++) {
+    if (selectedDirPaths[i] != 0 && selectedDirPaths[i] != "") {filledCount++;}
 }
+print("Expected number of directory filepaths = " + selectedDirPaths.length + ", actual = " + filledCount);
+
+// --- Prepare CSV Files ---
+csvFilePaths = newArray(tif_searchStrings.length);
+for (i = 0; i < tif_searchStrings.length; i++) {
+	formatted_channelCombination = replace(channelCombination, "_", "-");
+    csvName = "BCs" + tif_searchStrings[i] + "_" + formatted_channelCombination + ".csv";
+    csvPath = baseDir + "\\randomly_sampled_BCs\\" + csvName;
+    
+    csvFilePaths[i] = csvPath;
+    
+    if (File.exists(csvPath)) {_ = File.delete(csvPath);}
+    File.append("ID,Min,Max", csvPath);
+	print("Created CSV file for: " + tif_searchStrings[i]);
+}
+
+// --- Process Images  ---
+for (i = 0; i < tif_searchStrings.length; i++) {
+	currentSearchString = tif_searchStrings[i];
+	print("... Processing images: " + currentSearchString);
+	currentCsvPath = csvFilePaths[i];
+	
+	for (j = 0; j < selectedDirPaths.length; j++) {
+		currentDirPath = selectedDirPaths[j];
+		currentDirFileList = getFileList(currentDirPath);
+		
+		tifFilePath = newArray(0);
+		for (k = 0; k < currentDirFileList.length; k++) {
+	        if (indexOf(toLowerCase(currentDirFileList[k]), currentSearchString) >= 0 && endsWith(currentDirFileList[k], ".tif")) {
+	            tifFilePath = Array.concat(tifFilePath, currentDirPath + currentDirFileList[k]);
+	        }
+		}
+		if (tifFilePath.length != 1) {
+			print("❌ Found " + tifFilePath.length + " TIFF files, expected one in " + currentDirPath);
+			continue;
+		}
+		
+		open(tifFilePath[0]);
+	    id = getTitle();
+	    
+		// Wait for user to auto set brightness and contrast settings 
+		waitForUser("", "Auto set BC settings");
+	    
+		// Get min and max pixel values 
+		getMinAndMax(min, max);
+	
+	    // Append row to CSV
+	    File.append(id + "," + min + "," + max, currentCsvPath);
+	
+	    close();
+	}
+	
+	print("✅ BCs saved to: " + currentCsvPath);
+}
+
+print("\n🎉 Randomly Sampling to Get BCs Complete: " + channelCombination);
 
