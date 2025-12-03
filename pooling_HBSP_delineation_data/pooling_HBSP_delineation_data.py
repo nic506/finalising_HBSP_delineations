@@ -210,7 +210,7 @@ if __name__ == "__main__":
 
     for i in range(len(HBSP_root_dirs)):
         filepath_dict = get_filepaths(HBSP_root_dirs[i], args.which_brain, i + 2)
-        montage_filepaths_dict = make_pooled_folders(args.output_dir, args.which_brain, filepath_dict, args.vpn_connection)
+        #montage_filepaths_dict = make_pooled_folders(args.output_dir, args.which_brain, filepath_dict, args.vpn_connection)
 
     # print("\n\n\n\n\n\n\n")
     #
@@ -227,4 +227,4 @@ if __name__ == "__main__":
     # print(filepath_dict["GEPH"])
     # print(len(filepath_dict["GEPH"]["SD03216_AD"]))
 
-    print(f"\n  COMPLETED SUCCESSFULLY\n")
+    print(f"\n\n----- COMPLETED SUCCESSFULLY -----\n\n")
