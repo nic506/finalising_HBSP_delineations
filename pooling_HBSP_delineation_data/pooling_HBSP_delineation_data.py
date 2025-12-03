@@ -123,7 +123,7 @@ def get_filepaths(HBSP_root_dirs, which_brain, which_nas):
                 filepath_dict[channel][core_id]["montage_filepaths"] = {}
                 filepath_dict[channel][core_id]["montage_filepaths"] = montages_filepaths
             else:
-                print(f"{len(montages_filepaths)} matches found for {core_id} in {os.path.normpath(montage_dir_filepath).split(os.sep)[-2:]}, expected {num_channels} matches")
+                print(f"{len(montages_filepaths)} montage matches found for {core_id} in {os.path.normpath(montage_dir_filepath).split(os.sep)[-2:]}, expected {num_channels} matches")
                 continue
 
     return filepath_dict
