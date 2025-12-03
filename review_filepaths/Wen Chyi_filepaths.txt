@@ -1,0 +1,19 @@
+
+For thursday 04/12/25
+
+	Z:\HBSP\pooled_delineation_data\Brain5\VGLUT_VGAT	
+
+
+
+
+For tuesday 09/12/25
+
+	Z:\HBSP\pooled_delineation_data\Brain6\VGLUT_VGAT
+
+	Z:\HBSP\pooled_delineation_data\Brain1\GLUN1_GLUA2
+
+	Z:\HBSP\pooled_delineation_data\Brain2\PSD95_PSD93_GLUN1
+
+	Z:\HBSP\pooled_delineation_data\Brain3\GEPH
+
+	Z:\HBSP\pooled_delineation_data\Brain4\PSD95_GLUA2_GLUN1
