@@ -100,14 +100,30 @@ def get_filepaths(HBSP_root_dirs, which_brain, which_nas):
             print(f"For {channel}, expected exactly one of 'Montages' or 'Montage_exports', but found {'both' if exists_a and exists_b else 'neither'}")
             continue
         num_channels = len(channel.split("_"))
+        dirs_to_look_in = set()
+        dirs_excluded = set()
+        for dirPath, dirNames, fileNames in os.walk(montage_dir_filepath):
+            dirs_to_look_in.add(dirPath)
+            for d in list(dirNames):
+                if any(keyword in d.lower() for keyword in ["focus", "control", "tilenum", "oof"]):
+                    dirNames.remove(d)
+                    dirs_excluded.add(d)
+        print(f"Montage directories to look in: {[os.path.basename(p) for p in dirs_to_look_in]}")
+        if dirs_excluded:
+            print(f"Montage directories excluded: {dirs_excluded}")
+        else:
+            print(f"No montage directories excluded")
         for core_id in core_id_list:
-            montage_name_matches = [f for f in os.listdir(montage_dir_filepath) if core_id in f]
-            if len(montage_name_matches) == num_channels:
-                montages_filepaths = [os.path.join(montage_dir_filepath, m) for m in montage_name_matches]
+            montages_filepaths = []
+            for dirPath in dirs_to_look_in:
+                for f in os.listdir(dirPath):
+                    if core_id in f:
+                        montages_filepaths.append(os.path.join(dirPath, f))
+            if len(montages_filepaths) == num_channels:
                 filepath_dict[channel][core_id]["montage_filepaths"] = {}
                 filepath_dict[channel][core_id]["montage_filepaths"] = montages_filepaths
             else:
-                print(f"{len(montage_name_matches)} montage_name_matches found for {core_id} in {os.path.normpath(montage_dir_filepath).split(os.sep)[-2:]}, expected {num_channels} matches")
+                print(f"{len(montages_filepaths)} matches found for {core_id} in {os.path.normpath(montage_dir_filepath).split(os.sep)[-2:]}, expected {num_channels} matches")
                 continue
 
     return filepath_dict
