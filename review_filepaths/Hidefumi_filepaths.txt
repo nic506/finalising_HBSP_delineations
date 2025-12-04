@@ -1,12 +1,5 @@
 
-For thursday 04/12/25
-
 	Z:\HBSP\pooled_delineation_data\Brain2\GLUN1_GLUA2	
-
-
-
-
-For tuesday 09/12/25
 
 	Z:\HBSP\pooled_delineation_data\Brain3\PSD95_PSD93_GLUN1
 
