@@ -161,16 +161,19 @@ function reviewImages(path1, path2, imageDir, baseName) {
 	    Dialog.create("REVIEW:");
 	    
 	    // Section 1: Image comparison
-	    choices = newArray("", "Image 1", "Image 2");
-		Dialog.addRadioButtonGroup("  Which image is better?", choices, 1, 3, "");
+	    choices = newArray("", "Image 1", "Image 2", "ERROR");
+		Dialog.addRadioButtonGroup("  Which image is better?", choices, 1, 4, "");
 		
 		// Section 2: Quality checks
 	  	Dialog.addMessage("\n");
 	  	Dialog.addMessage("Quality checks:");
 		Dialog.addCheckboxGroup(
-		    2, 2,
-		    newArray("Needs to be rotated", "Tissue rip", "Blood vessel", "Edge artefact"),
-		    newArray(false, false, false, false)
+		    2, 3,
+		    newArray(
+		    	"Needs rotating", "Needs shifting", "Needs scaling",
+		    	"Rip artefact", "Vessel artefact", "Edge artefact"
+		    ),
+		    newArray(false, false, false, false, false, false)
 		);
 	    Dialog.addString("Other notes:", "", 30);
 	    
@@ -183,8 +186,10 @@ function reviewImages(path1, path2, imageDir, baseName) {
 	    // Retrieve values from dialogue - order MUST match order they were added
 	    imageChoice = Dialog.getRadioButton();
 	    needsRotation = Dialog.getCheckbox();
-	    tissueRip = Dialog.getCheckbox();
-	    bloodVessel = Dialog.getCheckbox();
+	    needsShifting = Dialog.getCheckbox();
+	    needsScaling = Dialog.getCheckbox();
+	    ripArtefact = Dialog.getCheckbox();
+	    vesselArtefact = Dialog.getCheckbox();
 	    edgeArtefact = Dialog.getCheckbox();
 		notes = Dialog.getString();
 		
@@ -205,7 +210,8 @@ function reviewImages(path1, path2, imageDir, baseName) {
 	
 	// Write the true name distinguisher string
 	if (imageChoice == "Image 1") {print(f, trueNameForImage1);}
-	else {print(f, trueNameForImage2);}
+	else if (imageChoice == "Image 2") {print(f, trueNameForImage2);}
+	else {print(f, "ERROR");}
 	
 	// Close the file
     File.close(f);
@@ -214,7 +220,7 @@ function reviewImages(path1, path2, imageDir, baseName) {
 	
 ////// INSTRUCTIONS TEXTFILE
 	// If any box ticked or notes written ...
-	if (needsRotation || tissueRip || bloodVessel || edgeArtefact || notes != "") {
+	if (needsRotation || needsShifting || needsScaling || ripArtefact || vesselArtefact || edgeArtefact || notes != "") {
 		
 		// Create the output filename
         instructionsOutputName = instructions_prefix + baseName + ".txt";
@@ -224,15 +230,19 @@ function reviewImages(path1, path2, imageDir, baseName) {
         f = File.open(instructionsOutputPath);
         
         // Write instructions in the text file
-        print(f, "Reviewer's instructions:");
-        print(f, "---------------------------------");
-        if (needsRotation) print(f, "- Needs to be rotated");
-        if (tissueRip)  print(f, "- Exclude tissue rips");
-        if (bloodVessel) print(f, "- Exclude large blood vessels");
-        if (edgeArtefact)  print(f, "- Exclude edge artefacts");
+        if (needsRotation || needsShifting || needsScaling || ripArtefact || vesselArtefact || edgeArtefact) {
+        	print(f, "");
+        	print(f, "Adjust ROIs as follows:");
+        }
+        if (needsRotation) print(f, "\t- Rotate (CW or CCW)");
+        if (needsShifting) print(f, "\t- Shift in x,y");
+        if (needsScaling) print(f, "\t- Scale (enlarge or minimise)");
+        if (ripArtefact)  print(f, "\t- Exclude tissue rips");
+        if (vesselArtefact) print(f, "\t- Exclude large blood vessels");
+        if (edgeArtefact)  print(f, "\t- Exclude bright edges");
         if (notes != "") {
             print(f, "");
-            print(f, "Additional Notes:");
+            print(f, "Notes:");
             print(f, notes);
         }
         

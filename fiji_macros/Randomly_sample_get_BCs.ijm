@@ -113,7 +113,7 @@ for (i = 0; i < tif_searchStrings.length; i++) {
 	    id = getTitle();
 	    
 		// Wait for user to auto set brightness and contrast settings 
-		waitForUser("", "Auto set BC settings");
+		waitForUser("", "Adjust BC settings: click 'Auto' once");
 	    
 		// Get min and max pixel values 
 		getMinAndMax(min, max);

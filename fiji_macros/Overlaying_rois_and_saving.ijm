@@ -1,6 +1,7 @@
 
 
 // --- Configuration ---
+jythonScriptPath = "Z:\\Nic\\Human Work\\HBSP Delineations\\fiji_macros\\check_rois_in_zip_func.py"; 
 registration_version_folder_names = newArray("old_regist", "new_regist");
 zip_searchString = "RoiSet";
 png_searchString = "HELL NO";
@@ -16,32 +17,32 @@ function findChannelCombination(name) {
 	if (name == "PSD95_PSD93_GLUN1") { 
 		channelCombination = "PSD95-PSD93";
 	    tif_searchStrings = newArray("_cy5", "_af546");
-		min_BC = newArray(, ); 
-	    max_BC = newArray(, );
+		min_BC = newArray(93.96551724, 96.73333333); 
+	    max_BC = newArray(326.5862069, 216.6333333);
 	}
 	else if (name == "PSD95_GLUA2_GLUN1") { 
 		channelCombination = "PSD95-GLUA2";
 	    tif_searchStrings = newArray("_cy5", "_af555");
-		min_BC = newArray(, ); 
-	    max_BC = newArray(, );
+		min_BC = newArray(98.26666667, 92.4); 
+	    max_BC = newArray(270.5, 276.0333333);
 	}
 	else if (name == "GEPH") { 
 		channelCombination = "GEPH";
 	    tif_searchStrings = newArray("_cy5");
-		min_BC = newArray(, ); 
-	    max_BC = newArray(, );
+		min_BC = newArray(92.33333333,0); 
+	    max_BC = newArray(190.0333333,0);
 	}
 	else if (name == "GLUN1_GLUA2") { 
 		channelCombination = "GLUN1-GLUA2";
 	    tif_searchStrings = newArray("_cy5", "_af546");
-		min_BC = newArray(, ); 
-	    max_BC = newArray(, );
+		min_BC = newArray(92.96666667, 89.6); 
+	    max_BC = newArray(261.9, 353.6);
 	}
 	else if (name == "VGLUT_VGAT") { 
 		channelCombination = "VGLUT-VGAT";
 	    tif_searchStrings = newArray("_568", "_cy5");
-		min_BC = newArray(, ); 
-	    max_BC = newArray(, );
+		min_BC = newArray(90.66666667, 106.6666667); 
+	    max_BC = newArray(353.4, 590.9333333);
 	}
 	else {print("❌ Unidentified channel combination " + name);}
 }
@@ -122,16 +123,28 @@ function processDirectory(dir) {
 		            print("❌ Missing ROI zip file in " + folderPath_2);
 		            continue;
 		        }
-		
+
 		        // --- Load ROIs and set properties ---
-		        roiManager("reset");
-		        roiManager("Open", zipFilePath);
-		        if (roiManager("count") > 0) {
+				cleanZipPath = replace(zipFilePath, "\\", "/");
+				runMacro(jythonScriptPath, cleanZipPath);
+				countFilePath = File.getParent(zipFilePath) + "\\roi_count.txt";
+				roiCountStr = String.trim(File.openAsString(countFilePath));
+
+		        if (roiCountStr == "0") {
+		        	print("❌ No ROIs in zip file " + zipFilePath);
+		        	continue;
+		        }
+		        else if (roiCountStr == "ERROR") {
+		        	print("❌ Could not read zip file " + zipFilePath);
+		        	continue;
+		        }
+				else {
+					roiManager("reset");
+			        roiManager("Open", zipFilePath);
 	                roiManager("Select All");
 	                roiManager("Set Color", strokeColor);
 	                roiManager("Set Line Width", lineWidth);
-	            }
-	            else {print("❌ No ROIs in zip " + zipFilePath);}
+		        }
 		
 		        // --- Process both PNG and TIF images ---
 		        if (tif_searchStrings[0] == "HELL NO") {print("✱ Not wanting to overlay TIFF file in " + folderPath_1);}
