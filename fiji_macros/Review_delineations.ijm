@@ -1,17 +1,15 @@
 
 
-// --- Configuration ---
-distinguisher1 = "old_regist";
-distinguisher2 = "new_regist";
-imageChoice_prefix = "ImageChoice  ";
-instructions_prefix = "Instructions  ";
-empty_prefix = "Empty  ";
-dialgoue_wait_for_user = false;
-
-
-
 // --- Main ---
 macro "Review Montages" {
+	
+	// --- Configuration ---
+	distinguisher1 = "old_regist";
+	distinguisher2 = "new_regist";
+	imageChoice_prefix = "ImageChoice  ";
+	instructions_prefix = "Instructions  ";
+	empty_prefix = "Empty  ";
+	dialgoue_wait_for_user = false;
 	setBatchMode(false);
 	
 	close("*");
