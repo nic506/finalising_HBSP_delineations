@@ -128,7 +128,6 @@ def get_filepaths(HBSP_root_dirs, which_brain, which_nas):
 
     return filepath_dict
 
-
 def make_pooled_folders(output_dir, which_brain, filepath_dict, vpn_connection):
 
     brain_dir = os.path.join(output_dir, "Brain" + str(which_brain))
@@ -185,7 +184,6 @@ def make_pooled_folders(output_dir, which_brain, filepath_dict, vpn_connection):
                     else:
                         print(f"{channel} {os.path.normpath(montage_dst).split(os.sep)[-2:]} already exists, skipping.")
 
-
 def robust_copy_for_vpn_nas_connection(src, dst):
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     try:
@@ -228,4 +226,3 @@ if __name__ == "__main__":
     # print(len(filepath_dict["GEPH"]["SD03216_AD"]))
 
     print(f"\n\n----- COMPLETED SUCCESSFULLY -----\n\n")
-

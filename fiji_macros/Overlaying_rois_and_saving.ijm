@@ -2,8 +2,8 @@
 
 // --- Configuration ---
 jythonScriptPath = "Z:\\Nic\\Human Work\\HBSP Delineations\\fiji_macros\\check_rois_in_zip_func.py"; 
-registration_version_folder_names = newArray("old_regist", "new_regist");
-zip_searchString = "RoiSet";
+subDir_names = "adjusted"; // options are: "regist" or "adjusted"
+zip_searchString = "";
 png_searchString = "HELL NO";
 overlayTIFFs = true;
 saving_prefix = "RoiOverlay_";                    
@@ -14,10 +14,10 @@ setBatchMode(true);
 var channelCombination, tif_searchStrings, min_BC, max_BC;
 
 function findChannelCombination(name) {
-	if (name == "PSD95_PSD93_GLUN1") { 
+	if (name == "PSD95_PSD93_GLUN1") {
 		channelCombination = "PSD95-PSD93";
 	    tif_searchStrings = newArray("_cy5", "_af546");
-		min_BC = newArray(93.96551724, 96.73333333); 
+		min_BC = newArray(93.96551724, 96.73333333);
 	    max_BC = newArray(326.5862069, 216.6333333);
 	}
 	else if (name == "PSD95_GLUA2_GLUN1") { 
@@ -49,7 +49,7 @@ function findChannelCombination(name) {
 
 
 
-// --- Main ---
+// --- Main --- 
 macro "Overlay ROIs" {
 	pooledBrainDir = getString("Enter pooled brain directory:", "");
 	if (!endsWith(pooledBrainDir, "\\")) {pooledBrainDir = pooledBrainDir + "\\";}
@@ -103,14 +103,21 @@ function processDirectory(dir) {
 		        }
 	        }
 	        
-	        // --- Loop over registration versions ---
-			for (k = 0; k < registration_version_folder_names.length; k++) {
-				registration_version = registration_version_folder_names[k];
+	        // --- Loop over sub directories ---
+	        if (subDir_names == "regist") {subDirs = newArray("old_regist", "new_regist");} 
+			else if (subDir_names == "adjusted") {subDirs = newArray("adjusted");} 
+			else {
+			    print("❌ Unrecognized subDir_names string, stopping script");
+			    break;
+			}
+	        
+			for (k = 0; k < subDirs.length; k++) {
+				subDir = subDirs[k];
 		        
 		        // --- Get png (Nissl) and zip (RoiSet) file paths ---
 		        pngFilePath = newArray(0);
 		        zipFilePath = "";
-		        folderPath_2 = folderPath_1 + registration_version + File.separator;
+		        folderPath_2 = folderPath_1 + subDir + File.separator;
 		        files_2 = getFileList(folderPath_2);
 		        for (j = 0; j < files_2.length; j++) {
 		            if (endsWith(files_2[j], ".png") && indexOf(files_2[j], png_searchString) >= 0) 
