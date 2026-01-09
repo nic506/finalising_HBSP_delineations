@@ -6,7 +6,7 @@ macro "Review Montages" {
 	// --- Configuration ---
 	distinguisher_names = "adjusted"; // options are: "regist" or "adjusted"
 	pull_up_prev_instructions = true;
-	randomise_blind_images = true;
+	randomise_blind_images = false;
 	dialgoue_wait_for_user = false;
 	setBatchMode(false);
 	
@@ -193,7 +193,8 @@ function reviewImages(path1, path2, imageDir, baseName) {
 	        trueNameForImage2 = distinguisher1;
 	    }
 	    
-	    choices_array = newArray("", "Image 1", "Image 2", "ERROR");
+        question = "  Which image is better?";
+	    choices = newArray("", "Image 1", "Image 2", "ERROR");
 	} 
 	else {
         open(path1);
@@ -201,7 +202,8 @@ function reviewImages(path1, path2, imageDir, baseName) {
     	open(path2);
         selectWindow(getTitle()); run("Rename...", "title=" + distinguisher2);
         
-        choices_array = newArray("x", "x", "x", "x");
+        question = "  Is student adjusted ok?";
+        choices = newArray("", "", "yes", "no");
 	} 
     
     // Conditional wait for user to enable them to interact with Fiji before dialogue shown
@@ -220,8 +222,7 @@ function reviewImages(path1, path2, imageDir, baseName) {
 	    Dialog.create("REVIEW:");
 	    
 	    // Section 1: Image comparison
-	    choices = choices_array; 
-		Dialog.addRadioButtonGroup("  Which image is better?", choices, 1, 4, "");
+		Dialog.addRadioButtonGroup(question, choices, 1, 4, "");
 		
 		// Section 2: Quality checks
 	  	Dialog.addMessage("\n");
@@ -271,6 +272,10 @@ function reviewImages(path1, path2, imageDir, baseName) {
 	if (randomise_blind_images) {
 		if (imageChoice == "Image 1") {print(f, trueNameForImage1);}
 		else if (imageChoice == "Image 2") {print(f, trueNameForImage2);}
+		else {print(f, "ERROR");}
+	}
+	else {
+		if (imageChoice == "yes") {print(f, "OK");}
 		else {print(f, "ERROR");}
 	}
 	
@@ -360,15 +365,17 @@ function set_TabsSizeAndPosition() {
 	// Calculate the single gap space for 3 gaps: 2 between screen edges + 1 between images
 	singleWidthGap = totalWidthGapSpace / 3;
 	
-	// Image 1 position - left
-	selectWindow("Image 1");
+	// First image position - left
+	if (randomise_blind_images) {selectWindow("Image 1");}
+	else {selectWindow(distinguisher1);}
 	Image1_PositionX = singleWidthGap;
 	
 	// Set image 1 size and position
 	setLocation(Image1_PositionX, PositionY, newWidth, newHeight);
 	
-	// Image 2 position - right
-	selectWindow("Image 2");
+	// Second 2 position - right
+	if (randomise_blind_images) {selectWindow("Image 2");}
+	else {selectWindow(distinguisher2);}
 	Image2_PositionX = singleWidthGap + newWidth + singleWidthGap;
 	
 	// Set image 2 size and position
