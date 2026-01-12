@@ -7,7 +7,7 @@ macro "Review Montages" {
 	distinguisher_names = "adjusted"; // options are: "regist" or "adjusted"
 	pull_up_prev_instructions = true;
 	randomise_blind_images = false;
-	dialgoue_wait_for_user = false;
+	dialgoue_wait_for_user = true;
 	setBatchMode(false);
 	
 	// Set imageChoice and instructions prefixes
@@ -64,7 +64,7 @@ function processDirectory(dir) {
 	        folderPath = dir + folders[i];
 	        print("\nProcessing folder: " + folderPath);
 	        
-	        // Skip folder if already reviewed this round and print instructions from previous review round
+	        // Skip folder if already reviewed this round 
             filesInFolder = getFileList(folderPath);
             shouldSkip_imageChoice_check = false;
             shouldSkip_instructions_check = false;
@@ -88,17 +88,6 @@ function processDirectory(dir) {
                 print("✱ Already reviewed, skipping folder: " + folderPath);
                 continue;
             }
-			if (pull_up_prev_instructions) {
-	            if (prev_instructions_filepath.length == 1) {
-					print("------------------------------");
-					print(File.openAsString(prev_instructions_filepath[0]));
-					print("------------------------------");
-	            } 
-	            else {
-	                print("❌ Exactly one previous-instructions textfile NOT found in: " + folderPath);
-	                continue;
-	            }
-			}
             
 			// Define distinguisher names 
 			if (distinguisher_names == "regist") {
@@ -153,14 +142,26 @@ function processDirectory(dir) {
                 }
 	        }
 	        
-	        // Check exactly one image for each distinguisher
+	        // Check exactly one image for each distinguisher and print instructions from previous review round
 	        if (path1.length == 1 && path2.length == 1) {
 				print("... Reviewing images: " + File.getName(path1[0]) + " + " + File.getName(path2[0]));
+    			if (pull_up_prev_instructions) {
+		            if (prev_instructions_filepath.length == 1) {
+		            	inst_text = File.openAsString(prev_instructions_filepath[0]);
+						trunc_inst_text = substring(inst_text, indexOf(inst_text, "\n") + 1, lastIndexOf(inst_text, "\n"));
+						print("------------------------------");
+						print(trunc_inst_text);
+						print("------------------------------");
+		            } 
+		            else {
+		                print("❌ Exactly one previous-instructions textfile NOT found in: " + folderPath);
+		                continue;
+		            }
+				}
                 reviewImages(path1[0], path2[0], folderPath, baseName);
             } 
             else {
-                print("❌ Exactly one image NOT found for each distinguisher string in: " + folderPath);
-                print("Check the correct distinguisher_names is configured");
+                print("❌ Exactly one image NOT found for each distinguisher string in: " + folderPath + "check the correct distinguisher_names is configured");
             }
 	    }
 	}
