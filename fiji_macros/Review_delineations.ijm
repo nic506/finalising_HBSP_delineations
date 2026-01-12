@@ -1,14 +1,14 @@
 
 
+// --- Configuration ---
+distinguisher_names = "adjusted"; // options are: "regist" or "adjusted"
+pull_up_prev_instructions = true;
+randomise_blind_images = false;
+dialgoue_wait_for_user = false;
+var PositionY, newHeight;
+
 // --- Main ---
 macro "Review Montages" {
-	
-	// --- Configuration ---
-	distinguisher_names = "adjusted"; // options are: "regist" or "adjusted"
-	pull_up_prev_instructions = true;
-	randomise_blind_images = false;
-	dialgoue_wait_for_user = false;
-	setBatchMode(false);
 	
 	// Set imageChoice and instructions prefixes
 	if (pull_up_prev_instructions) {
@@ -206,6 +206,9 @@ function reviewImages(path1, path2, imageDir, baseName) {
         question = "  Is student adjusted ok?";
         choices = newArray("", "", "yes", "no");
 	} 
+	
+    // Use self-defined function to set the size and position of images 
+    set_imageSizeAndPosition();
     
     // Conditional wait for user to enable them to interact with Fiji before dialogue shown
     if (dialgoue_wait_for_user) {
@@ -238,8 +241,8 @@ function reviewImages(path1, path2, imageDir, baseName) {
 		);
 	    Dialog.addString("Other notes:", "", 30);
 	    
-	    // Use self-defined function to set the size and position of images and dialogue
-	    set_TabsSizeAndPosition();
+	    // Use self-defined function to set the size and position of dialogue
+	    set_dialogueSizeAndPosition();
 	    
 		// Show the dialogue (if "Cancel" is selected it stops the script)
 	    Dialog.show();
@@ -338,8 +341,8 @@ function reviewImages(path1, path2, imageDir, baseName) {
 	close("*");
 }
 
-// --- Set Tabs Sizes And Positions Func (consistent across samples + computer screens) ---
-function set_TabsSizeAndPosition() {
+// --- Set Images (2x) Sizes And Positions Func (consistent across samples + computer screens) ---
+function set_imageSizeAndPosition() {
 	
 	// IMAGE SIZE LOGIC //
 	// Image actual (not screen) height-to-width ratio (doesn't matter which image active as dimensions identical)
@@ -381,6 +384,10 @@ function set_TabsSizeAndPosition() {
 	
 	// Set image 2 size and position
 	setLocation(Image2_PositionX, PositionY, newWidth, newHeight);
+}
+
+// --- Set Dialogue Size And Position Func (consistent across samples + computer screens) ---
+function set_dialogueSizeAndPosition() {
 	
 	// DIALOGUE POSITIONING LOGIC //
 	// Calculate dialogue y position
