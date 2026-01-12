@@ -7,7 +7,7 @@ macro "Review Montages" {
 	distinguisher_names = "adjusted"; // options are: "regist" or "adjusted"
 	pull_up_prev_instructions = true;
 	randomise_blind_images = false;
-	dialgoue_wait_for_user = true;
+	dialgoue_wait_for_user = false;
 	setBatchMode(false);
 	
 	// Set imageChoice and instructions prefixes
