@@ -1,13 +1,11 @@
 
 
 // --- Configuration ---
-distinguisher_names = "adjusted"; // options are: "regist" or "adjusted" or "neuropath"
+distinguisher_names = "adjusted"; // options are: "regist" or "adjusted"
 pull_up_prev_instructions = true;
 randomise_blind_images = false;
 dialgoue_wait_for_user = false;
 var PositionY, newHeight;
-
-
 
 // --- Main ---
 macro "Review Montages" {
@@ -31,63 +29,63 @@ macro "Review Montages" {
 	waitForUser("",
 	    "\nPrepare Your Screen For Reviewing:"
 	    + "\n "
-	    + "\n(1) Move the Log window to the bottom-left (or bottom-right if neuropath) corner of the screen."
+	    + "\n(1) Move the Log window to the bottom-left corner of the screen."
 	    + "\n(2) Hide all other application windows except Fiji."
 	    + "\n "
 	);
 	
 	while (true) {
 		//baseDir = getDirectory("Choose base directory");
-		baseDir_path = getString("Enter base directory:", "");
-		if (!endsWith(baseDir_path, "\\")) {baseDir_path = baseDir_path + "\\";}
+		baseDir = getString("Enter base directory:", "");
+		if (!endsWith(baseDir, "\\")) {baseDir = baseDir + "\\";}
 		
 		close("*");
 		print("\\Clear");
-		print("--- Base Directory: " + File.getName(baseDir_path) + " ---");
-	    processDirectory(baseDir_path);
-	    split_path = split(baseDir_path, "\\");
-	    print("\n🎉 Reviewing Complete: " + baseDir_path);
+		print("--- Base Directory: " + File.getName(baseDir) + " ---");
+	    processDirectory(baseDir);
+	    split_path = split(baseDir, "\\");
+	    print("\n🎉 Reviewing Complete: " + baseDir);
 	    
 	    logContent = getInfo("log");
 	    getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
 	    timeStamp = "" + year + "-" + month + "-" + dayOfMonth + "-" + hour + "-" + minute + "-" + second + "-" + msec;
-	    logFilePath = baseDir_path + "Review_Log(" + timeStamp + ").txt";
+	    logFilePath = baseDir + "Review_Log(" + timeStamp + ").txt";
 	    File.saveString(logContent, logFilePath);
 	}
 }
 
 // --- Process Directory Func ---
-function processDirectory(baseDir_path) {
+function processDirectory(dir) {
 	
-	// Loop over sub directories in base dir
-	baseDir_fileList = getFileList(baseDir_path);
-	for (i = 0; i < baseDir_fileList.length; i++) {
-		subDir_path = baseDir_path + baseDir_fileList[i];
-	    if (File.isDirectory(subDir_path)) {
-	        print("\nProcessing folder: " + subDir_path);
+	// Loop over directories in dir
+	folders = getFileList(dir);
+	for (i = 0; i < folders.length; i++) {
+	    if (File.isDirectory(dir + folders[i])) {
+	        folderPath = dir + folders[i];
+	        print("\nProcessing folder: " + folderPath);
 	        
-	        // Skip sub directory if already reviewed this round 
-            subDir_fileList = getFileList(subDir_path);
+	        // Skip folder if already reviewed this round 
+            filesInFolder = getFileList(folderPath);
             shouldSkip_imageChoice_check = false;
             shouldSkip_instructions_check = false;
             prev_instructions_filepath = newArray(0);
-            for (k = 0; k < subDir_fileList.length; k++) {
-                fileName = subDir_fileList[k];
+            for (k = 0; k < filesInFolder.length; k++) {
+                fileName = filesInFolder[k];
                 if (startsWith(fileName, imageChoice_prefix) && endsWith(fileName, ".csv")) {
                     shouldSkip_imageChoice_check = true;
                 }
                 if ((startsWith(fileName, instructions_prefix) || startsWith(fileName, empty_prefix)) && endsWith(fileName, ".txt")) {
                     shouldSkip_instructions_check = true;
-					instructions_filepath = Array.concat(instructions_filepath, subDir_path + fileName);
+					instructions_filepath = Array.concat(instructions_filepath, folderPath + fileName);
                 }
                 if (pull_up_prev_instructions) {
 	                if (startsWith(fileName, prev_instructions_prefix) && endsWith(fileName, ".txt")) {
-						prev_instructions_filepath = Array.concat(prev_instructions_filepath, subDir_path + fileName);
+						prev_instructions_filepath = Array.concat(prev_instructions_filepath, folderPath + fileName);
 	                }
                 }
             }
 			if (shouldSkip_instructions_check && shouldSkip_imageChoice_check) {
-                print("✱ Already reviewed, skipping folder: " + subDir_path);
+                print("✱ Already reviewed, skipping folder: " + folderPath);
                 continue;
             }
             
@@ -98,17 +96,13 @@ function processDirectory(baseDir_path) {
 			} 
 			else if (distinguisher_names == "adjusted") {
             	distinguisher1 = "adjusted";
-			    if (File.exists(subDir_path + "new_regist" + File.separator)) {distinguisher2 = "new_regist";} 
-			    else if (File.exists(subDir_path + "old_regist" + File.separator)) {distinguisher2 = "old_regist";}
+			    if (File.exists(folderPath + "new_regist" + File.separator)) {distinguisher2 = "new_regist";} 
+			    else if (File.exists(folderPath + "old_regist" + File.separator)) {distinguisher2 = "old_regist";}
 			    else {
-			    	print("❌ Neither 'old_regist' or 'new_regist' folder exists in " + subDir_path);
+			    	print("❌ Neither 'old_regist' or 'new_regist' folder exists in " + folderPath);
 			    	continue;
 			    }
 			} 
-			else if (distinguisher_names == "neuropath") {
-                distinguisher1 = "";
-                distinguisher2 = "*****"; 
-            }
 			else {
 			    print("❌ Unrecognized distinguisher_names string, stopping script");
 			    break;
@@ -118,53 +112,39 @@ function processDirectory(baseDir_path) {
 			path1 = newArray(0);
             path2 = newArray(0);
             baseName = "";
-            for (k = 0; k < subDir_fileList.length; k++) {
-                fileName = subDir_fileList[k];
+	        for (j = 0; j < filesInFolder.length; j++) {
+                fileName = filesInFolder[j];
                 
-                // Check for single neuropath image and create basename to save output file
-                if (distinguisher_names == "neuropath") {
-            		if (endsWith(fileName, ".png") && indexOf(fileName, distinguisher1) >= 0 && startsWith(fileName, "RoiOverlay_")) {
-						path1 = Array.concat(path1, subDir_path + fileName);
-                		baseName = replace(fileName, ".png", "");
-						path2 = Array.concat(path2, "");                		
-            		}
+                // Check for distinguisher 1 image and create basename to save output file
+                if (File.isDirectory(folderPath + fileName) && fileName == distinguisher1 + "/") {
+                	subfolderPath = folderPath + fileName;
+                	filesInSubfolder = getFileList(subfolderPath);
+                	for (w = 0; w < filesInSubfolder.length; w++) {
+                		fileNameSub = filesInSubfolder[w];
+                		if (endsWith(fileNameSub, ".png") && indexOf(fileNameSub, distinguisher1) >= 0 && startsWith(fileNameSub, "RoiOverlay_Composite")) {
+							path1 = Array.concat(path1, subfolderPath + fileNameSub);
+                    		baseName = replace(fileNameSub, ".png", "");
+                    		baseName = replace(baseName, distinguisher1, "");
+                		}
+                	}
                 }
-                else {
-                	// Check for distinguisher 1 image and create basename to save output file
-	                if (File.isDirectory(subDir_path + fileName) && fileName == distinguisher1 + "/") {
-	                	subsubDir_path = subDir_path + fileName;
-	                	subsubDir_fileList = getFileList(subsubDir_path);
-	                	for (j = 0; j < subsubDir_fileList.length; j++) {
-	                		subFileName = subsubDir_fileList[j];
-	                		if (endsWith(subFileName, ".png") && indexOf(subFileName, distinguisher1) >= 0 && startsWith(subFileName, "RoiOverlay_")) {
-								path1 = Array.concat(path1, subsubDir_path + subFileName);
-	                    		baseName = replace(subFileName, ".png", "");
-	                    		baseName = replace(baseName, distinguisher1, "");
-	                		}
-	                	}
-	                }
-	                
-	                // Check for distinguisher 2 image
-	                else if (File.isDirectory(subDir_path + fileName) && fileName == distinguisher2 + "/") {
-	                	subsubDir_path = subDir_path + fileName;
-	                	filesInSubfolder = getFileList(subsubDir_path);
-	                	for (w = 0; w < filesInSubfolder.length; w++) {
-	                		subFileName = filesInSubfolder[w];
-							if (endsWith(subFileName, ".png") && indexOf(subFileName, distinguisher2) >= 0 && startsWith(subFileName, "RoiOverlay_")) {
-	                    		path2 = Array.concat(path2, subsubDir_path + subFileName);
-	                		}
-	                	}
-	                }
+                
+                // Check for distinguisher 2 image
+                else if (File.isDirectory(folderPath + fileName) && fileName == distinguisher2 + "/") {
+                	subfolderPath = folderPath + fileName;
+                	filesInSubfolder = getFileList(subfolderPath);
+                	for (w = 0; w < filesInSubfolder.length; w++) {
+                		fileNameSub = filesInSubfolder[w];
+						if (endsWith(fileNameSub, ".png") && indexOf(fileNameSub, distinguisher2) >= 0 && startsWith(fileNameSub, "RoiOverlay_Composite")) {
+                    		path2 = Array.concat(path2, subfolderPath + fileNameSub);
+                		}
+                	}
                 }
 	        }
 	        
-	        // Check exactly one image for each distinguisher (allow single image if neuropath mode) and print instructions from previous review round
-	        validPair = (path1.length == 1 && path2.length == 1);
-	        validSingle = (distinguisher_names == "neuropath" && path1.length == 1);
-	        if (validPair || validSingle) {
-	        	msg = "... Reviewing image(s): " + File.getName(path1[0]);
-				if (validPair) {msg += " + " + File.getName(path2[0]);}
-				print(msg);
+	        // Check exactly one image for each distinguisher and print instructions from previous review round
+	        if (path1.length == 1 && path2.length == 1) {
+				print("... Reviewing images: " + File.getName(path1[0]) + " + " + File.getName(path2[0]));
     			if (pull_up_prev_instructions) {
 		            if (prev_instructions_filepath.length == 1) {
 		            	inst_text = File.openAsString(prev_instructions_filepath[0]);
@@ -174,14 +154,14 @@ function processDirectory(baseDir_path) {
 						print("------------------------------");
 		            } 
 		            else {
-		                print("❌ Exactly one previous-instructions textfile NOT found in: " + subDir_path);
+		                print("❌ Exactly one previous-instructions textfile NOT found in: " + folderPath);
 		                continue;
 		            }
 				}
-                reviewImages(path1[0], path2[0], subDir_path, baseName);
+                reviewImages(path1[0], path2[0], folderPath, baseName);
             } 
             else {
-                print("❌ Exactly one image NOT found for each distinguisher string in: " + subDir_path + "check the correct distinguisher_names is configured");
+                print("❌ Exactly one image NOT found for each distinguisher string in: " + folderPath + "check the correct distinguisher_names is configured");
             }
 	    }
 	}
@@ -190,14 +170,8 @@ function processDirectory(baseDir_path) {
 // --- Dual Image Review Func ---
 function reviewImages(path1, path2, imageDir, baseName) {
 	
-	// Open images and randomise (or not) their titles, also handle single image case
-    if (distinguisher_names == "neuropath") {
-        open(path1);
-        
-        question = "  Are annotations ok?";
-        choices = newArray("", "", "yes", "no");
-    }
-	else if (randomise_blind_images) {
+	// Open images and randomise (or not) their titles
+	if (randomise_blind_images) {
 		trueNameForImage1 = "";
 	    trueNameForImage2 = "";
 	    
@@ -229,7 +203,7 @@ function reviewImages(path1, path2, imageDir, baseName) {
     	open(path2);
         selectWindow(getTitle()); run("Rename...", "title=" + distinguisher2);
         
-        question = "  Are student adjustments ok?";
+        question = "  Is student adjusted ok?";
         choices = newArray("", "", "yes", "no");
 	} 
 	
@@ -367,30 +341,20 @@ function reviewImages(path1, path2, imageDir, baseName) {
 	close("*");
 }
 
-// --- Set Images Sizes And Positions Func For Image Pair And Single ---
+// --- Set Images (2x) Sizes And Positions Func (consistent across samples + computer screens) ---
 function set_imageSizeAndPosition() {
-	
-	// SET IMAGE SIZE AND POSITION PROPORTIONS //
-	if (distinguisher_names == "neuropath") {
-		max_width_proportion = 0.7;
-		max_height_proportion = 0.95;
-	}
-	else {
-		max_width_proportion = 0.485;
-		max_height_proportion = 0.68;
-	}
 	
 	// IMAGE SIZE LOGIC //
 	// Image actual (not screen) height-to-width ratio (doesn't matter which image active as dimensions identical)
 	height_to_width = getHeight() / getWidth();
 	
-	// Calculate the screen height for the maximum screen width
-	newWidth = screenWidth * max_width_proportion;
+	// Calculate the screen height for the maximum screen width that allows for three gaps, each 1% of screen width
+	newWidth = screenWidth * 0.485;
 	newHeight = newWidth * height_to_width;
 	
-	// If resulting height exceeds max_height_proportion of screen height, set height to that threshold and scale width proportionally
-	if (newHeight > screenHeight * max_height_proportion) {
-	    scaleFactor = (screenHeight * max_height_proportion) / newHeight;
+	// If resulting height exceeds 65% of screen height, set height to that threshold and scale width proportionally
+	if (newHeight > screenHeight * 0.68) {
+	    scaleFactor = (screenHeight * 0.68) / newHeight;
 	    newWidth = newWidth * scaleFactor;
 	    newHeight = newHeight * scaleFactor;
 	}
@@ -399,45 +363,37 @@ function set_imageSizeAndPosition() {
 	// Common y position
 	PositionY = screenHeight * 0.005;
 	
-	if (distinguisher_names == "neuropath") {
-		// Set single image size and position
-		PositionX = screenWidth * 0.005;
-		setLocation(PositionX, PositionY, newWidth, newHeight);
-	}
-	else {
-		// Calculate the total empty gap space on the screen's width
-		totalWidthGapSpace = screenWidth - (newWidth * 2);
-		
-		// Calculate the single gap space for 3 gaps: 2 between screen edges + 1 between images
-		singleWidthGap = totalWidthGapSpace / 3;
-		
-		// First image position - left
-		if (randomise_blind_images) {selectWindow("Image 1");}
-		else {selectWindow(distinguisher1);}
-		Image1_PositionX = singleWidthGap;
-		
-		// Set image 1 size and position
-		setLocation(Image1_PositionX, PositionY, newWidth, newHeight);
-		
-		// Second 2 position - right (only if not neuropath mode)
-		if (randomise_blind_images) {selectWindow("Image 2");}
-		else {selectWindow(distinguisher2);}
-		Image2_PositionX = singleWidthGap + newWidth + singleWidthGap;
-		
-		// Set image 2 size and position
-		setLocation(Image2_PositionX, PositionY, newWidth, newHeight);
-	}
+	// Calculate the total empty gap space on the screen's width
+	totalWidthGapSpace = screenWidth - (newWidth * 2);
+	
+	// Calculate the single gap space for 3 gaps: 2 between screen edges + 1 between images
+	singleWidthGap = totalWidthGapSpace / 3;
+	
+	// First image position - left
+	if (randomise_blind_images) {selectWindow("Image 1");}
+	else {selectWindow(distinguisher1);}
+	Image1_PositionX = singleWidthGap;
+	
+	// Set image 1 size and position
+	setLocation(Image1_PositionX, PositionY, newWidth, newHeight);
+	
+	// Second 2 position - right
+	if (randomise_blind_images) {selectWindow("Image 2");}
+	else {selectWindow(distinguisher2);}
+	Image2_PositionX = singleWidthGap + newWidth + singleWidthGap;
+	
+	// Set image 2 size and position
+	setLocation(Image2_PositionX, PositionY, newWidth, newHeight);
 }
 
-// --- Set Dialogue Size And Position Func ---
+// --- Set Dialogue Size And Position Func (consistent across samples + computer screens) ---
 function set_dialogueSizeAndPosition() {
 	
 	// DIALOGUE POSITIONING LOGIC //
 	// Calculate dialogue y position
-	if (distinguisher_names == "neuropath") {DIALOGUE_PositionY = screenHeight * 0.05;}
-	else {DIALOGUE_PositionY = PositionY + newHeight + (screenHeight * 0.00001);}
+	DIALOGUE_PositionY = PositionY + newHeight + (screenHeight * 0.00001);
 	
 	// Set dialogue position
-	Dialog.setLocation((screenWidth / 1.5), DIALOGUE_PositionY);
+	Dialog.setLocation((screenWidth / 2), DIALOGUE_PositionY);
 }
 
