@@ -1,16 +1,14 @@
 
 
-// --- Configuration ---
-distinguisher_names = "adjusted"; // options are: "regist" or "adjusted" or "neuropath"
-pull_up_prev_instructions = true;
-randomise_blind_images = false;
-dialgoue_wait_for_user = false;
-var PositionY, newHeight;
-
-
-
 // --- Main ---
 macro "Review Montages" {
+	
+	// --- Configuration (MUST LEAVE CONFIG INSIDE MAIN TO BE ABLE TO INSTALL MACRO) ---
+	distinguisher_names = "adjusted"; // options are: "regist" or "adjusted" or "neuropath"
+	pull_up_prev_instructions = true;
+	randomise_blind_images = false;
+	dialgoue_wait_for_user = false;
+	var PositionY, newHeight;
 	
 	// Set imageChoice and instructions prefixes
 	if (pull_up_prev_instructions) {
